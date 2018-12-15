@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Peter Jiyuan Zhou" />
+
+
+<title>US Airport Delay and snowfall in January 2018</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/simplex.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.0.13/css/fa-svg-with-js.css" rel="stylesheet" />
+<script src="site_libs/font-awesome-5.0.13/js/fontawesome-all.min.js"></script>
+<script src="site_libs/font-awesome-5.0.13/js/fa-v4-shims.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="styles.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 41px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 46px;
+  margin-top: -46px;
+}
+
+.section h2 {
+  padding-top: 46px;
+  margin-top: -46px;
+}
+.section h3 {
+  padding-top: 46px;
+  margin-top: -46px;
+}
+.section h4 {
+  padding-top: 46px;
+  margin-top: -46px;
+}
+.section h5 {
+  padding-top: 46px;
+  margin-top: -46px;
+}
+.section h6 {
+  padding-top: 46px;
+  margin-top: -46px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">R Data Science Final Project</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/adammwilson/RDataScience">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">US Airport Delay and snowfall in January 2018</h1>
+<h3 class="subtitle"><em>A study to address airport delay and snow</em></h3>
+<h4 class="author"><em>Peter Jiyuan Zhou</em></h4>
+
+</div>
+
+
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>Air travel is increasingly popular in not only the United States but also other parts of the world. However, flight delay are getting more and more normal especially for large airports. In the northern part of the US, snow is often one of the factor resulting in flight delay in winter and it is especially annoying. This project aims to analyse the vulnerability of airport delays to snowfall across different region in the US.</p>
+</div>
+<div id="data" class="section level1">
+<h1>Data</h1>
+<ul>
+<li><a href="https://www.transtats.bts.gov/Tables.asp?DB_ID=120&amp;DB_Name=Airline%20On-Time%20Performance%20Data&amp;DB_Short_Name=On-Time">On Time Performance Data</a>: “Airline On Time Performance Data” from Bureau of Transportation Statistics, Unitd States Department of Transportation.</li>
+<li><a href="https://www.transtats.bts.gov/Tables.asp?DB_ID=595&amp;DB_Name=Aviation%20Support%20Tables">Airport Location Data</a>: “Master Coordinates” of “Aviation Support Table” from Bureau of Transportation Statistics, United States Department of Transportation</li>
+<li>Snow Fall Data: Pull from NOAA using the R Package rnoaa.</li>
+</ul>
+</div>
+<div id="materials-and-methods" class="section level1">
+<h1>Materials and methods</h1>
+<ul>
+<li>Importing the airport data and data cleaning</li>
+</ul>
+<pre class="r"><code>library(tidyverse)
+library(ggmap)
+library(ggplot2)
+library(dplyr)
+library(spData)
+library(sf)
+library(rgdal)
+library(rnoaa)
+data(world)
+albers &lt;- &quot;+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs&quot;
+US.sf &lt;- world %&gt;% dplyr::filter(iso_a2 == &quot;US&quot;)
+US.sf.albers &lt;- US.sf %&gt;% st_transform(albers)
+OTP &lt;- read.csv(&quot;data/OnTimeP.csv&quot;)
+APdata &lt;- read.csv(&quot;data/AirportData.csv&quot;)
+OTP.clean &lt;- OTP %&gt;% dplyr::filter(DEP_DELAY_NEW &gt;= 1) %&gt;% dplyr::filter(WEATHER_DELAY &gt;= 1) %&gt;% 
+  dplyr::select(YEAR, MONTH, DAY_OF_MONTH, ORIGIN, ORIGIN_STATE_ABR, DEP_DELAY_NEW, WEATHER_DELAY)
+OTP.sum &lt;- OTP.clean %&gt;% dplyr::select(ORIGIN, DEP_DELAY_NEW, WEATHER_DELAY) %&gt;%
+  group_by(ORIGIN) %&gt;% summarize(total_delay = sum(DEP_DELAY_NEW), weather = sum(WEATHER_DELAY))
+OTP.sum$ORIGIN &lt;- sapply(OTP.sum$ORIGIN, as.character)
+Airports &lt;- APdata %&gt;% select(AIRPORT, DISPLAY_AIRPORT_NAME, DISPLAY_AIRPORT_CITY_NAME_FULL, AIRPORT_COUNTRY_CODE_ISO, AIRPORT_STATE_CODE, LATITUDE, LONGITUDE)
+A &lt;- Airports %&gt;% group_by(AIRPORT) %&gt;% summarize(lat = mean(LATITUDE), lon = mean(LONGITUDE)) %&gt;%
+  dplyr::filter(lat != &quot;NA&quot;) %&gt;% dplyr::filter(lon != &quot;NA&quot;)
+A$AIRPORT &lt;- sapply(A$AIRPORT, as.character)
+Airport.sf &lt;- st_as_sf(A, coords = c(&quot;lon&quot;, &quot;lat&quot;), crs = 4326)
+A_O.inner &lt;- left_join(OTP.sum, A, by = c(&quot;ORIGIN&quot; = &quot;AIRPORT&quot;))
+A_O.inner.sf &lt;- st_as_sf(A_O.inner, coords = c(&quot;lon&quot;, &quot;lat&quot;), crs = 4326)</code></pre>
+<ul>
+<li>Read in the NOAA station data at the airports, which were bufferd and intersected locally</li>
+</ul>
+<pre class="r"><code>st.snow.st.us.inx.2 &lt;- read.csv(&quot;data/st_snow_st_us_inx_2.csv&quot;)
+st.snow.st.us.inx.2 &lt;- st_as_sf(st.snow.st.us.inx.2, coords = c(&quot;xcoord&quot;, &quot;ycoord&quot;), crs = albers) %&gt;% select(-X)</code></pre>
+<ul>
+<li>Importing the snowfall data in January 2018 and cleaning, inersecting with a the airport buffer and made a table which is ready to be plotted.</li>
+</ul>
+<pre class="r"><code>weather2 &lt;- meteo_pull_monitors(monitors = st.snow.st.us.inx.2$id, date_min = &quot;2018-01-01&quot;, date_max = &quot;2018-01-31&quot;, var = &quot;SNOW&quot;)
+weather &lt;- weather2 %&gt;% spread(date, snow, fill = 0)
+Airport.weather &lt;- left_join(weather, st.snow.st.us.inx.2, by = c(&quot;id&quot; = &quot;id&quot;))</code></pre>
+<pre><code>## Warning: Column `id` joining character vector and factor, coercing into
+## character vector</code></pre>
+<pre class="r"><code>Airport.weather2 &lt;- left_join(weather2, st.snow.st.us.inx.2, by = c(&quot;id&quot; = &quot;id&quot;))</code></pre>
+<pre><code>## Warning: Column `id` joining character vector and factor, coercing into
+## character vector</code></pre>
+<pre class="r"><code>OTP.weather &lt;- OTP.clean %&gt;% select(YEAR, MONTH, DAY_OF_MONTH, ORIGIN, WEATHER_DELAY) %&gt;% dplyr::group_by_(.dots = c(&quot;DAY_OF_MONTH&quot;, &quot;ORIGIN&quot;)) %&gt;% summarise(W_DELAY = sum(WEATHER_DELAY))
+OTP.weather.spread &lt;- OTP.weather %&gt;% spread(DAY_OF_MONTH, W_DELAY, fill = 0)
+Airport.weather3 &lt;- left_join(OTP.weather, Airport.weather2, by = c(&quot;ORIGIN&quot; = &quot;ORIGIN&quot;)) %&gt;% dplyr::filter(snow != 0)</code></pre>
+<pre><code>## Warning: Column `ORIGIN` joining factors with different levels, coercing to
+## character vector</code></pre>
+</div>
+<div id="results" class="section level1">
+<h1>Results</h1>
+<ul>
+<li>Visualization of Locaton of all US Airport considered</li>
+</ul>
+<pre class="r"><code>p1 &lt;- ggplot(US.sf) + geom_sf(aes(geometry = geom)) + geom_point(data = A_O.inner, aes(x = lon, y = lat))
+p1</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<ul>
+<li>Visualization of US Airport with most weather related delays</li>
+</ul>
+<pre class="r"><code>p2 &lt;- ggplot(US.sf) + geom_sf(aes(geometry = geom)) + geom_point(data = A_O.inner, aes(x = lon, y = lat, size = weather))
+p2</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>This plot was done with different size of dot showing amount of each airport delay in minutes. We can see that in the Northeastern part of the United States, weather delay is way more significant than anywhere in the country.</p>
+<ul>
+<li>Scattered plot of Total Delay in Minutes vs Weather Delay</li>
+</ul>
+<pre class="r"><code>p3 &lt;- ggplot(A_O.inner) + geom_point(aes(x = log(weather), y = log(total_delay))) + geom_smooth(method = loess, aes(x = log(weather), y = log(total_delay)))
+p3</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<ul>
+<li>Scattered plot of Weather Delay in Minutes vs Snow Fall amount in mm</li>
+</ul>
+<pre class="r"><code>p4 &lt;- ggplot(data = Airport.weather3) + geom_point(aes(x = snow, y = W_DELAY))
+p4</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<ul>
+<li>Chose Buffalo as one of the airport that I am interested in and made scattered plots of snow fall change over time, weather delay in minutes over time and weather delay vs snow fall</li>
+</ul>
+<pre class="r"><code>BUF &lt;- OTP.weather %&gt;% dplyr::filter(ORIGIN == &quot;BUF&quot;) %&gt;% arrange(DAY_OF_MONTH)
+p.BUF.1 &lt;- ggplot(data = BUF) + geom_point(aes(x = DAY_OF_MONTH, y = W_DELAY))
+p.BUF.1</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<pre class="r"><code>BUF.weather &lt;- weather2 %&gt;% left_join(st.snow.st.us.inx.2, by = &quot;id&quot;) %&gt;% dplyr::filter(ORIGIN == &quot;BUF&quot;) %&gt;% na.omit() %&gt;% separate(date, c(&quot;year&quot;, &quot;month&quot;, &quot;day&quot;), sep = &quot;-&quot;, convert = TRUE) %&gt;% group_by(day) %&gt;% summarise(SNOW = mean(snow))</code></pre>
+<pre><code>## Warning: Column `id` joining character vector and factor, coercing into
+## character vector</code></pre>
+<pre class="r"><code>p.BUF.2 &lt;- ggplot(data = BUF.weather) + geom_point(aes(x = day, y = SNOW))
+p.BUF.2</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-8-2.png" width="672" /></p>
+<pre class="r"><code>BUF.join &lt;- left_join(BUF.weather, BUF, by = c(&quot;day&quot; = &quot;DAY_OF_MONTH&quot;)) %&gt;% select(-ORIGIN)
+BUF.join$W_DELAY &lt;- BUF.join$W_DELAY %&gt;% replace_na(0)
+p.BUF &lt;- ggplot(data = BUF.join) + geom_point(aes(x = SNOW, y = W_DELAY))</code></pre>
+<ul>
+<li>Chose another airport, Boston Logan Intl, and made scattered plots of snow fall change over time, weather delay in minutes over time and weather delay vs snow fall</li>
+</ul>
+<pre class="r"><code>BOS &lt;- OTP.weather %&gt;% dplyr::filter(ORIGIN == &quot;BOS&quot;) %&gt;% arrange(DAY_OF_MONTH)
+p.BOS.1 &lt;- ggplot(data = BOS) + geom_point(aes(x = DAY_OF_MONTH, y = W_DELAY))
+p.BOS.1</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<pre class="r"><code>BOS.weather &lt;- weather2 %&gt;% left_join(st.snow.st.us.inx.2, by = &quot;id&quot;) %&gt;% dplyr::filter(ORIGIN == &quot;BOS&quot;) %&gt;% na.omit() %&gt;% separate(date, c(&quot;year&quot;, &quot;month&quot;, &quot;day&quot;), sep = &quot;-&quot;, convert = TRUE) %&gt;% group_by(day) %&gt;% summarise(SNOW = mean(snow))</code></pre>
+<pre><code>## Warning: Column `id` joining character vector and factor, coercing into
+## character vector</code></pre>
+<pre class="r"><code>p.BOS.2 &lt;- ggplot(data = BOS.weather) + geom_point(aes(x = day, y = SNOW))
+p.BOS.2</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-9-2.png" width="672" /></p>
+<pre class="r"><code>BOS.join &lt;- left_join(BOS.weather, BOS, by = c(&quot;day&quot; = &quot;DAY_OF_MONTH&quot;)) %&gt;% select(-ORIGIN)
+BOS.join$W_DELAY &lt;- BOS.join$W_DELAY %&gt;% replace_na(0)
+p.BOS &lt;- ggplot(data = BOS.join) + geom_point(aes(x = SNOW, y = W_DELAY))
+p.BOS</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-9-3.png" width="672" /></p>
+</div>
+<div id="conclusions" class="section level1">
+<h1>Conclusions</h1>
+<p>From the few scattered plot of weather delay vs snow at two airports, Buffalo, NY and Boston, MA, it does not look like that the weather delay has a potential statistical relation with snow fall. Looking into the metadata of the On Time Performance on the US Bureau of Transportation Statistics, the column of weather delay includes all flights that were delayed by weather, not only limited to the ones that were influenced by weather condition at the origin airport. Future works could be done as putting the first two maps in a leaflet interactive map, as well as looking into more ways to address the “weather-not-on-site” problem.</p>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<ul>
+<li><a href="https://www.transtats.bts.gov/Tables.asp?DB_ID=120&amp;DB_Name=Airline%20On-Time%20Performance%20Data&amp;DB_Short_Name=On-Time">On Time Performance Data</a>: “Airline On Time Performance Data” from Bureau of Transportation Statistics, Unitd States Department of Transportation.</li>
+<li><a href="https://www.transtats.bts.gov/Tables.asp?DB_ID=595&amp;DB_Name=Aviation%20Support%20Tables">Airport Location Data</a>: “Master Coordinates” of “Aviation Support Table” from Bureau of Transportation Statistics, United States Department of Transportation</li>
+</ul>
+</div>
+
+<!-- give the footer some space -->
+<br/>
+<br/>
+
+<footer id="site-footer">
+  <div id="footer1">
+  This website is a project for Adam Wilson's <a href="http://www.adamwilson.us/RDataScience"><i> Spatial Data Science (GEO503) </i></a>Course at the University at Buffalo
+  </div>
+  <div id="footer2">
+  <a rel="license" property="http://creativecommons.org/ns#license"
+  href="http://creativecommons.org/licenses/by/4.0/" ><img src="img/cc-by.svg" alt="cc-by"/></a> 
+  </div>
+</footer>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+
+</body>
+</html>
