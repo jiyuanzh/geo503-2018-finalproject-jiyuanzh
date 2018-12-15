@@ -10,10 +10,11 @@ Air travel is increasingly popular in not only the United States but also other 
 # Data
 * [On Time Performance Data](https://www.transtats.bts.gov/Tables.asp?DB_ID=120&DB_Name=Airline%20On-Time%20Performance%20Data&DB_Short_Name=On-Time): "Airline On Time Performance Data" from Bureau of Transportation Statistics, Unitd States Department of Transportation.
 * [Airport Location Data](https://www.transtats.bts.gov/Tables.asp?DB_ID=595&DB_Name=Aviation%20Support%20Tables): "Master Coordinates" of "Aviation Support Table" from Bureau of Transportation Statistics, United States Department of Transportation
+* Snow Fall Data: Pull from NOAA using the R Package rnoaa.
 
 # Materials and methods
 
-* Importing the data and data cleaning
+* Importing the airport data and data cleaning
 ```{r message = FALSE}
 library(tidyverse)
 library(ggmap)
@@ -22,8 +23,11 @@ library(dplyr)
 library(spData)
 library(sf)
 library(rgdal)
+library(rnoaa)
 data(world)
+albers <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
 US.sf <- world %>% dplyr::filter(iso_a2 == "US")
+US.sf.albers <- US.sf %>% st_transform(albers)
 OTP <- read.csv("data/OnTimeP.csv")
 APdata <- read.csv("data/AirportData.csv")
 OTP.clean <- OTP %>% dplyr::filter(DEP_DELAY_NEW >= 1) %>% dplyr::filter(WEATHER_DELAY >= 1) %>% 
@@ -36,14 +40,32 @@ A <- Airports %>% group_by(AIRPORT) %>% summarize(lat = mean(LATITUDE), lon = me
   dplyr::filter(lat != "NA") %>% dplyr::filter(lon != "NA")
 A$AIRPORT <- sapply(A$AIRPORT, as.character)
 Airport.sf <- st_as_sf(A, coords = c("lon", "lat"), crs = 4326)
+A_O.inner <- left_join(OTP.sum, A, by = c("ORIGIN" = "AIRPORT"))
+A_O.inner.sf <- st_as_sf(A_O.inner, coords = c("lon", "lat"), crs = 4326)
+```
+
+* Read in the NOAA station data at the airports, which were bufferd and intersected locally
+```{r}
+st.snow.st.us.inx.2 <- read.csv("data/st_snow_st_us_inx_2.csv")
+st.snow.st.us.inx.2 <- st_as_sf(st.snow.st.us.inx.2, coords = c("xcoord", "ycoord"), crs = albers) %>% select(-X)
+```
+
+* Importing the snowfall data in January 2018 and cleaning, inersecting with a the airport buffer and made a table which is ready to be plotted.
+```{r}
+weather2 <- meteo_pull_monitors(monitors = st.snow.st.us.inx.2$id, date_min = "2018-01-01", date_max = "2018-01-31", var = "SNOW")
+weather <- weather2 %>% spread(date, snow, fill = 0)
+Airport.weather <- left_join(weather, st.snow.st.us.inx.2, by = c("id" = "id"))
+Airport.weather2 <- left_join(weather2, st.snow.st.us.inx.2, by = c("id" = "id"))
+OTP.weather <- OTP.clean %>% select(YEAR, MONTH, DAY_OF_MONTH, ORIGIN, WEATHER_DELAY) %>% dplyr::group_by_(.dots = c("DAY_OF_MONTH", "ORIGIN")) %>% summarise(W_DELAY = sum(WEATHER_DELAY))
+OTP.weather.spread <- OTP.weather %>% spread(DAY_OF_MONTH, W_DELAY, fill = 0)
+Airport.weather3 <- left_join(OTP.weather, Airport.weather2, by = c("ORIGIN" = "ORIGIN")) %>% dplyr::filter(snow != 0)
+
 ```
 
 # Results
 
 * Visualization of Locaton of all US Airport considered
 ```{r}
-A_O.inner <- left_join(OTP.sum, A, by = c("ORIGIN" = "AIRPORT"))
-A_O.inner.sf <- st_as_sf(A_O.inner, coords = c("lon", "lat"), crs = 4326)
 p1 <- ggplot(US.sf) + geom_sf(aes(geometry = geom)) + geom_point(data = A_O.inner, aes(x = lon, y = lat))
 p1
 ```
@@ -53,6 +75,8 @@ p1
 p2 <- ggplot(US.sf) + geom_sf(aes(geometry = geom)) + geom_point(data = A_O.inner, aes(x = lon, y = lat, size = weather))
 p2
 ```
+  
+This plot was done with different size of dot showing amount of each airport delay in minutes. We can see that in the Northeastern part of the United States, weather delay is way more significant than anywhere in the country.  
 
 * Scattered plot of Total Delay in Minutes vs Weather Delay
 ```{r}
@@ -60,10 +84,44 @@ p3 <- ggplot(A_O.inner) + geom_point(aes(x = log(weather), y = log(total_delay))
 p3
 ```
 
+* Scattered plot of Weather Delay in Minutes vs Snow Fall amount in mm
+```{r}
+p4 <- ggplot(data = Airport.weather3) + geom_point(aes(x = snow, y = W_DELAY))
+p4
+```
+
+* Chose Buffalo as one of the airport that I am interested in and made scattered plots of snow fall change over time, weather delay in minutes over time and weather delay vs snow fall
+```{r}
+BUF <- OTP.weather %>% dplyr::filter(ORIGIN == "BUF") %>% arrange(DAY_OF_MONTH)
+p.BUF.1 <- ggplot(data = BUF) + geom_point(aes(x = DAY_OF_MONTH, y = W_DELAY))
+p.BUF.1
+BUF.weather <- weather2 %>% left_join(st.snow.st.us.inx.2, by = "id") %>% dplyr::filter(ORIGIN == "BUF") %>% na.omit() %>% separate(date, c("year", "month", "day"), sep = "-", convert = TRUE) %>% group_by(day) %>% summarise(SNOW = mean(snow))
+p.BUF.2 <- ggplot(data = BUF.weather) + geom_point(aes(x = day, y = SNOW))
+p.BUF.2
+BUF.join <- left_join(BUF.weather, BUF, by = c("day" = "DAY_OF_MONTH")) %>% select(-ORIGIN)
+BUF.join$W_DELAY <- BUF.join$W_DELAY %>% replace_na(0)
+p.BUF <- ggplot(data = BUF.join) + geom_point(aes(x = SNOW, y = W_DELAY))
+```
+
+* Chose another airport, Boston Logan Intl, and made scattered plots of snow fall change over time, weather delay in minutes over time and weather delay vs snow fall
+```{r}
+BOS <- OTP.weather %>% dplyr::filter(ORIGIN == "BOS") %>% arrange(DAY_OF_MONTH)
+p.BOS.1 <- ggplot(data = BOS) + geom_point(aes(x = DAY_OF_MONTH, y = W_DELAY))
+p.BOS.1
+BOS.weather <- weather2 %>% left_join(st.snow.st.us.inx.2, by = "id") %>% dplyr::filter(ORIGIN == "BOS") %>% na.omit() %>% separate(date, c("year", "month", "day"), sep = "-", convert = TRUE) %>% group_by(day) %>% summarise(SNOW = mean(snow))
+p.BOS.2 <- ggplot(data = BOS.weather) + geom_point(aes(x = day, y = SNOW))
+p.BOS.2
+BOS.join <- left_join(BOS.weather, BOS, by = c("day" = "DAY_OF_MONTH")) %>% select(-ORIGIN)
+BOS.join$W_DELAY <- BOS.join$W_DELAY %>% replace_na(0)
+p.BOS <- ggplot(data = BOS.join) + geom_point(aes(x = SNOW, y = W_DELAY))
+p.BOS
+```
 
 # Conclusions
 
-What have you learned?  Are there any broader implications?
+From the few scattered plot of weather delay vs snow at two airports, Buffalo, NY and Boston, MA, it does not look like that the weather delay has a potential statistical relation with snow fall. Looking into the metadata of the On Time Performance on the US Bureau of Transportation Statistics, the column of weather delay includes all flights that were delayed by weather, not only limited to the ones that were influenced by weather condition at the origin airport. Future works could be done as putting the first two maps in a leaflet interactive map, as well as looking into more ways to address the "weather-not-on-site" problem.
 
 # References
+* [On Time Performance Data](https://www.transtats.bts.gov/Tables.asp?DB_ID=120&DB_Name=Airline%20On-Time%20Performance%20Data&DB_Short_Name=On-Time): "Airline On Time Performance Data" from Bureau of Transportation Statistics, Unitd States Department of Transportation.
+* [Airport Location Data](https://www.transtats.bts.gov/Tables.asp?DB_ID=595&DB_Name=Aviation%20Support%20Tables): "Master Coordinates" of "Aviation Support Table" from Bureau of Transportation Statistics, United States Department of Transportation
 
